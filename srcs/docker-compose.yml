@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mariadb:
+    build:
+      context: ./mariadb
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - my_network
+
+  wordpress:
+    build:
+      context: ./wordpress
+      dockerfile: Dockerfile
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - my_network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+    networks:
+      - my_network
+
+volumes:
+  mariadb_data:
+  wordpress_data:
+
+networks:
+  my_network:
+    driver: bridge
+
