@@ -1,24 +1,27 @@
-# Usar Debian Bullseye como imagen base
 FROM debian:bullseye
 
-# Instalar NGINX y OpenSSL para generar el certificado TLS
-RUN apt update && apt install -y nginx openssl
+# Install nginx and openssl
+RUN apt-get update && apt-get install -y nginx openssl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Crear un directorio para almacenar el certificado SSL
+# Create directories for SSL certificate and nginx configuration
 RUN mkdir -p /etc/nginx/ssl
 
-# Generar un certificado autofirmado para TLS
+# Generate self-signed SSL certificate
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/nginx/ssl/nginx.key \
     -out /etc/nginx/ssl/nginx.crt \
-    -subj "/C=US/ST=CA/L=SanFrancisco/O=42/OU=42/CN=${DOMAIN_NAME}"
+    -subj "/C=ES/ST=Madrid/L=Madrid/O=42/OU=42/CN=gpinilla.42.fr"
 
-# Copiar el archivo de configuración de NGINX
-COPY ./conf/default.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration
+COPY ./conf/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Exponer el puerto 443 para HTTPS
+# Create directory for web files
+RUN mkdir -p /var/www/html
+
+# Expose port 443
 EXPOSE 443
 
-# Iniciar NGINX en modo de primer plano
+# Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
-

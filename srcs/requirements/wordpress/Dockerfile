@@ -1,26 +1,42 @@
-# Usar Debian Bullseye como imagen base
 FROM debian:bullseye
 
-# Instalar dependencias necesarias: PHP, extensiones y herramientas de WordPress
-RUN apt update && apt install -y php-fpm php-mysql curl && \
-    mkdir -p /var/www/html
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    php7.4 \
+    php7.4-fpm \
+    php7.4-mysql \
+    php7.4-curl \
+    php7.4-gd \
+    php7.4-intl \
+    php7.4-mbstring \
+    php7.4-soap \
+    php7.4-xml \
+    php7.4-xmlrpc \
+    php7.4-zip \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Descargar y configurar WordPress
-RUN curl -O https://wordpress.org/latest.tar.gz && \
-    tar -xzf latest.tar.gz && \
-    rm latest.tar.gz && \
-    mv wordpress/* /var/www/html && \
-    chown -R www-data:www-data /var/www/html
+# Download WP-CLI
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O /usr/local/bin/wp \
+    && chmod +x /usr/local/bin/wp
 
-# Configurar variables de entorno (tomadas desde el archivo .env en docker-compose)
-ENV WORDPRESS_DB_HOST=mariadb:3306 \
-    WORDPRESS_DB_USER=${MYSQL_USER} \
-    WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD} \
-    WORDPRESS_DB_NAME=${MYSQL_DATABASE}
+# Configure PHP-FPM
+RUN mkdir -p /run/php \
+    && sed -i 's/listen = \/run\/php\/php7.4-fpm.sock/listen = 9000/g' /etc/php/7.4/fpm/pool.d/www.conf
 
-# Exponer el puerto 9000, que es el puerto de PHP-FPM para la comunicación con NGINX
+# Create web directory
+RUN mkdir -p /var/www/html
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy WordPress setup script
+COPY ./tools/setup-wordpress.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/setup-wordpress.sh
+
+# Expose port
 EXPOSE 9000
 
-# Iniciar PHP-FPM en modo de primer plano para que el contenedor se mantenga en ejecución
-CMD ["php-fpm7.4", "-F"]
-
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/setup-wordpress.sh"]
