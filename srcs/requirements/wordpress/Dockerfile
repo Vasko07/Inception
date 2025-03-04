@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y \
     php7.4-xmlrpc \
     php7.4-zip \
     wget \
+    unzip \
+    curl \
+    mariadb-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,6 +31,15 @@ RUN mkdir -p /run/php \
 # Create web directory
 RUN mkdir -p /var/www/html
 
+# Download and Install WordPress in Spanish
+RUN wget https://es.wordpress.org/latest-es_ES.tar.gz -O /tmp/latest-es_ES.tar.gz \
+    && tar -xvzf /tmp/latest-es_ES.tar.gz --strip-components=1 -C /var/www/html \
+    && rm /tmp/latest-es_ES.tar.gz
+
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
+
 # Set working directory
 WORKDIR /var/www/html
 
@@ -35,8 +47,9 @@ WORKDIR /var/www/html
 COPY ./tools/setup-wordpress.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/setup-wordpress.sh
 
-# Expose port
+# Expose port for PHP-FPM
 EXPOSE 9000
 
-# Set entrypoint
+# Start PHP-FPM and WordPress setup
 ENTRYPOINT ["/usr/local/bin/setup-wordpress.sh"]
+
