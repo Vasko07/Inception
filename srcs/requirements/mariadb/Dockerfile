@@ -1,25 +1,19 @@
 FROM debian:bullseye
 
-# Install MariaDB
+# Instalar MariaDB
 RUN apt-get update && apt-get install -y mariadb-server && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create directory for custom configuration
-RUN mkdir -p /etc/mysql/conf.d
+# Crear el directorio del socket y darle permisos correctos
+RUN mkdir -p /run/mysqld && chown -R mysql:mysql /run/mysqld && chmod 777 /run/mysqld
 
-# Copy custom configuration
-COPY ./conf/mariadb.cnf /etc/mysql/conf.d/
+# Copiar la configuración personalizada de MariaDB
+COPY conf/mariadb.cnf /etc/mysql/mariadb.conf.d/99-custom.cnf
+COPY conf/init.sql /docker-entrypoint-initdb.d/
 
-# Copy initialization script
-COPY ./tools/init-db.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/init-db.sh
-
-# Create directory for database files
-RUN mkdir -p /var/lib/mysql
-
-# Expose MySQL port
+# Exponer puerto
 EXPOSE 3306
 
-# Set entrypoint
-ENTRYPOINT ["/usr/local/bin/init-db.sh"]
+# Ejecutar MariaDB y forzar la ejecución del script de inicialización
+CMD ["bash", "-c", "mysqld --init-file=/docker-entrypoint-initdb.d/init.sql"]
+
