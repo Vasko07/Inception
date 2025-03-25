@@ -42,5 +42,15 @@ networks:
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: '/home/gpinilla/data/mysql'
+      o: bind
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: '/home/gpinilla/data/wordpress'
+      o: bind
 
