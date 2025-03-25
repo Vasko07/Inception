@@ -21,7 +21,7 @@ build:
 	@echo "Building and starting containers..."
 	@cd srcs && docker-compose up -d --build
 
-stop:
+start:
 	@echo "Starting containers..."
 	@cd srcs && docker-compose start
 
